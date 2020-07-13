@@ -38,6 +38,7 @@
 package tecmo
 
 import chisel3._
+import chisel3.util._
 
 /**
  * Represents the video timing signals.
@@ -58,24 +59,20 @@ class Video extends Bundle {
 }
 
 /** Represents the video timing configuration. */
-case class VideoTimingConfig(hDisplay: Int = 256,
-                             hFrontPorch: Int = 40,
-                             hRetrace: Int = 32,
-                             hBackPorch: Int = 56,
-                             hOffset: Int = 46,
-                             vDisplay: Int = 224,
-                             vFrontPorch: Int = 16,
-                             vRetrace: Int = 8,
-                             vBackPorch: Int = 16,
-                             vOffset: Int = 0) {
-  val hBeginScan    = 0
+case class VideoTimingConfig(hDisplay: Int,
+                             hFrontPorch: Int,
+                             hRetrace: Int,
+                             hBackPorch: Int,
+                             vDisplay: Int,
+                             vFrontPorch: Int,
+                             vRetrace: Int,
+                             vBackPorch: Int) {
   val hEndScan      = hBackPorch+hDisplay+hFrontPorch+hRetrace // 384
   val hBeginSync    = hBackPorch+hDisplay+hFrontPorch
   val hEndSync      = hBackPorch+hDisplay+hFrontPorch+hRetrace
   val hBeginDisplay = hBackPorch
   val hEndDisplay   = hBackPorch+hDisplay
 
-  val vBeginScan    = 0
   val vEndScan      = vBackPorch+vDisplay+vFrontPorch+vRetrace // 264
   val vBeginSync    = vBackPorch+vDisplay+vFrontPorch
   val vEndSync      = vBackPorch+vDisplay+vFrontPorch+vRetrace
@@ -106,38 +103,23 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
     val video = Output(new Video)
   })
 
-  // Position register
-  val pos = RegInit(Pos(xInit.U, yInit.U))
-
-  // Counter control signals
-  val xWrap = pos.x === (config.hEndScan-1).U
-  val yWrap = pos.y === (config.vEndScan-1).U
-  val xStep = io.cen
-  val yStep = io.cen && pos.x === (config.hBeginSync-1).U
+  // Counters
+  val (x, xWrap) = Counter(io.cen, config.hEndScan)
+  val (y, yWrap) = Counter(io.cen && xWrap, config.vEndScan)
 
   // Sync signals
-  val hSync = pos.x >= config.hBeginSync.U && pos.x < config.hEndSync.U
-  val vSync = pos.y >= config.vBeginSync.U && pos.y < config.vEndSync.U
+  val hSync = x >= config.hBeginSync.U && x < config.hEndSync.U
+  val vSync = y >= config.vBeginSync.U && y < config.vEndSync.U
 
   // Blanking signals
-  val hDisplay = pos.x >= config.hBeginDisplay.U && pos.x < config.hEndDisplay.U
-  val vDisplay = pos.y >= config.vBeginDisplay.U && pos.y < config.vEndDisplay.U
+  val hDisplay = x >= config.hBeginDisplay.U && x < config.hEndDisplay.U
+  val vDisplay = y >= config.vBeginDisplay.U && y < config.vEndDisplay.U
 
-  // Horizontal counter
-  when(xStep) {
-    pos.x := pos.x + 1.U
-    when(xWrap) { pos.x := config.hBeginScan.U }
-  }
-
-  // Vertical counter
-  when(yStep) {
-    pos.y := pos.y + 1.U
-    when(yWrap) { pos.y := config.vBeginScan.U }
-  }
+  // Offset the position so the display region begins at the origin
+  val pos = Pos(x-config.hBackPorch.U, y-config.vBackPorch.U)
 
   // Outputs
-  io.video.pos.x := pos.x - config.hOffset.U
-  io.video.pos.y := pos.y - config.vOffset.U
+  io.video.pos := pos
   io.video.hSync := hSync
   io.video.vSync := vSync
   io.video.hBlank := !hDisplay

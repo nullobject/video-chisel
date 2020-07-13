@@ -49,7 +49,16 @@ class Tecmo extends Module {
     val rgb = Output(new RGB)
   })
 
-  val config = VideoTimingConfig()
+  val config = VideoTimingConfig(
+    hDisplay = 320,
+    hBackPorch = 48,
+    hFrontPorch = 8,
+    hRetrace = 8,
+    vDisplay = 240,
+    vBackPorch = 12,
+    vFrontPorch = 4,
+    vRetrace = 8
+  )
   val videoTiming = Module(new VideoTiming(config))
   videoTiming.io.cen := true.B
   val video = videoTiming.io.video
