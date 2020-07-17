@@ -67,13 +67,13 @@ case class VideoTimingConfig(hDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int,
                              vBackPorch: Int) {
-  val hEndScan      = hBackPorch+hDisplay+hFrontPorch+hRetrace // 384
+  val hEndScan      = hBackPorch+hDisplay+hFrontPorch+hRetrace
   val hBeginSync    = hBackPorch+hDisplay+hFrontPorch
   val hEndSync      = hBackPorch+hDisplay+hFrontPorch+hRetrace
   val hBeginDisplay = hBackPorch
   val hEndDisplay   = hBackPorch+hDisplay
 
-  val vEndScan      = vBackPorch+vDisplay+vFrontPorch+vRetrace // 264
+  val vEndScan      = vBackPorch+vDisplay+vFrontPorch+vRetrace
   val vBeginSync    = vBackPorch+vDisplay+vFrontPorch
   val vEndSync      = vBackPorch+vDisplay+vFrontPorch+vRetrace
   val vBeginDisplay = vBackPorch
@@ -107,6 +107,9 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
   val (x, xWrap) = Counter(io.cen, config.hEndScan)
   val (y, yWrap) = Counter(io.cen && xWrap, config.vEndScan)
 
+  // Offset the position so the display region begins at the origin
+  val pos = Pos(x-config.hBackPorch.U, y-config.vBackPorch.U)
+
   // Sync signals
   val hSync = x >= config.hBeginSync.U && x < config.hEndSync.U
   val vSync = y >= config.vBeginSync.U && y < config.vEndSync.U
@@ -114,9 +117,6 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
   // Blanking signals
   val hDisplay = x >= config.hBeginDisplay.U && x < config.hEndDisplay.U
   val vDisplay = y >= config.vBeginDisplay.U && y < config.vEndDisplay.U
-
-  // Offset the position so the display region begins at the origin
-  val pos = Pos(x-config.hBackPorch.U, y-config.vBackPorch.U)
 
   // Outputs
   io.video.pos := pos
