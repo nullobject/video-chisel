@@ -51,13 +51,13 @@ class Tecmo extends Module {
 
   val config = VideoTimingConfig(
     hDisplay = 320, // 382
-    hBackPorch = 28,
-    hRetrace = 28,
-    hFrontPorch = 6,
+    hFrontPorch = 5,
+    hRetrace = 23,
+    hBackPorch = 34,
     vDisplay = 240, // 273
-    vBackPorch = 13,
-    vRetrace = 8,
-    vFrontPorch = 12
+    vFrontPorch = 12,
+    vRetrace = 2,
+    vBackPorch = 19
   )
   val videoTiming = Module(new VideoTiming(config))
   videoTiming.io.cen := true.B
