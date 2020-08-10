@@ -49,7 +49,7 @@ entity top is
 end top;
 
 architecture arch of top is
-  component Tecmo is
+  component TestPattern is
     port (
       clock          : in std_logic;
       reset          : in std_logic;
@@ -59,7 +59,7 @@ architecture arch of top is
       io_rgb_g       : out std_logic_vector(3 downto 0);
       io_rgb_b       : out std_logic_vector(3 downto 0)
     );
-  end component Tecmo;
+  end component TestPattern;
 
   signal clk_6 : std_logic;
   signal locked : std_logic;
@@ -74,7 +74,7 @@ begin
     locked   => locked
   );
 
-  tecmo_inst : component Tecmo
+  test_pattern_inst : component TestPattern
   port map (
     clock          => clk_6,
     reset          => not locked,

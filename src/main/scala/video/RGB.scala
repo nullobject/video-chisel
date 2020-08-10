@@ -35,7 +35,7 @@
  *  SOFTWARE.
  */
 
-package tecmo
+package video
 
 import chisel3._
 

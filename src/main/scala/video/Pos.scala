@@ -35,48 +35,38 @@
  *  SOFTWARE.
  */
 
-package tecmo
+package video
 
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
-/** This is the top-level module for the Tecmo arcade hardware. */
-class Tecmo extends Module {
-  val io = IO(new Bundle {
-    /** Video signals */
-    val video = Output(new Video)
-    /** RGB output */
-    val rgb = Output(new RGB)
-  })
+/**
+ * Represents a 2D position.
+ *
+ * @param n The data width.
+ */
+class Pos(n: Int = 9) extends Bundle {
+  /** Horizontal position */
+  val x = UInt(n.W)
+  /** Vertical position */
+  val y = UInt(n.W)
 
-  val config = VideoTimingConfig(
-    hDisplay = 320, // 382
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240, // 273
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
-  )
-  val videoTiming = Module(new VideoTiming(config))
-  videoTiming.io.cen := true.B
-  val video = videoTiming.io.video
-
-  val rgb = RGB(
-    Mux(video.pos.x(2, 0) === 0.U | video.pos.y(2, 0) === 0.U, 63.U, 0.U),
-    Mux(video.pos.x(4), 63.U, 0.U),
-    Mux(video.pos.y(4), 63.U, 0.U),
-  )
-
-  // Outputs
-  io.video := video
-  io.rgb := Mux(video.enable, rgb, RGB(0.U))
+  override def cloneType: this.type = new Pos(n).asInstanceOf[this.type]
 }
 
-object Tecmo extends App {
-  (new ChiselStage).execute(
-    Array("-X", "verilog", "--target-dir", "quartus/rtl"),
-    Seq(ChiselGeneratorAnnotation(() => new Tecmo()))
-  )
+object Pos {
+  /**
+   * Constructs a position from X and Y values.
+   *
+   * @param x The horizontal position.
+   * @param y The vertical position.
+   */
+  def apply(x: UInt, y: UInt) = {
+    val pos = Wire(new Pos)
+    pos.x := x
+    pos.y := y
+    pos
+  }
+
+  /** Constructs a position set to the origin. */
+  def zero = Pos(0.U, 0.U)
 }
