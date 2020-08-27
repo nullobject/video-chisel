@@ -1,6 +1,5 @@
 *.qdf
 *.qws
-.idea
 project/target
 quartus/c5_pin_model_dump.txt
 quartus/db
