@@ -61,7 +61,7 @@ class TestPattern extends Module {
     vRetrace = 2,
   )
   val videoTiming = Module(new VideoTiming(config))
-  videoTiming.io.offset := Pos.zero
+  videoTiming.io.offset := SVec2(0.S, -1.S)
   val video = videoTiming.io.video
 
   val rgb = RGB(
