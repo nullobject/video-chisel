@@ -101,11 +101,9 @@ case class VideoTimingConfig(clockFreq: Double,
  */
 class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) extends Module {
   val io = IO(new Bundle {
-    /** Clock enable */
-    val cen = Input(Bool())
-    /** Offset input */
+    /** Video offset */
     val offset = Input(new Pos(9))
-    /** Video signals */
+    /** Video port */
     val video = Output(new Video)
   })
 
@@ -123,8 +121,8 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
   val vEndDisplay = vBackPorch + config.vDisplay.U
 
   // Counters
-  val (x, xWrap) = Counter(io.cen, config.width)
-  val (y, yWrap) = Counter(io.cen && xWrap, config.height)
+  val (x, xWrap) = Counter(true.B, config.width)
+  val (y, yWrap) = Counter(xWrap, config.height)
 
   // Offset the position so the display region begins at the origin
   val pos = Pos(x - hBackPorch, y - vBackPorch)
