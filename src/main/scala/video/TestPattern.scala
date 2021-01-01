@@ -50,7 +50,7 @@ class TestPattern extends Module {
   })
 
   val config = VideoTimingConfig(
-    clkFreq = 6600000,
+    clockFreq = 6600000,
     hFreq = 15750,
     vFreq = 57.55,
     hDisplay = 320,
@@ -62,6 +62,7 @@ class TestPattern extends Module {
   )
   val videoTiming = Module(new VideoTiming(config))
   videoTiming.io.cen := true.B
+  videoTiming.io.offset := Pos.zero
   val video = videoTiming.io.video
 
   val rgb = RGB(

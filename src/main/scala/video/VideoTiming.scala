@@ -61,17 +61,17 @@ class Video extends Bundle {
 /**
  * Video timing configuration.
  *
- * @param clkFreq     The pixel clock frequency.
+ * @param clockFreq   The pixel clock frequency.
  * @param hFreq       The horizontal frequency.
- * @param hDisplay    The width of the horizontal display region.
- * @param hFrontPorch The width of the horizontal front porch.
- * @param hRetrace    The width of the horizontal retrace.
+ * @param hDisplay    The horizontal display width.
+ * @param hFrontPorch The width of the horizontal front porch region.
+ * @param hRetrace    The width of the horizontal retrace region.
  * @param vFreq       The vertical frequency.
- * @param vDisplay    The width of the vertical display region.
- * @param vFrontPorch The width of the vertical front porch.
- * @param vRetrace    The width of the vertical retrace.
+ * @param vDisplay    The vertical display height.
+ * @param vFrontPorch The width of the vertical front porch region.
+ * @param vRetrace    The width of the vertical retrace region.
  */
-case class VideoTimingConfig(clkFreq: Int,
+case class VideoTimingConfig(clockFreq: Double,
                              hFreq: Double,
                              hDisplay: Int,
                              hFrontPorch: Int,
@@ -80,23 +80,8 @@ case class VideoTimingConfig(clkFreq: Int,
                              vDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int) {
-  val width = math.ceil(clkFreq / hFreq).toInt
+  val width = math.ceil(clockFreq / hFreq).toInt
   val height = math.ceil(hFreq / vFreq).toInt
-
-  val hBackPorch = width - hDisplay - hFrontPorch - hRetrace
-  val vBackPorch = height - vDisplay - vFrontPorch - vRetrace
-
-  val hEndScan = hBackPorch + hDisplay + hFrontPorch + hRetrace
-  val hBeginSync = hBackPorch + hDisplay + hFrontPorch
-  val hEndSync = hBackPorch + hDisplay + hFrontPorch + hRetrace
-  val hBeginDisplay = hBackPorch
-  val hEndDisplay = hBackPorch + hDisplay
-
-  val vEndScan = vBackPorch + vDisplay + vFrontPorch + vRetrace
-  val vBeginSync = vBackPorch + vDisplay + vFrontPorch
-  val vEndSync = vBackPorch + vDisplay + vFrontPorch + vRetrace
-  val vBeginDisplay = vBackPorch
-  val vEndDisplay = vBackPorch + vDisplay
 }
 
 /**
@@ -118,24 +103,39 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
   val io = IO(new Bundle {
     /** Clock enable */
     val cen = Input(Bool())
+    /** Offset input */
+    val offset = Input(new Pos(9))
     /** Video signals */
     val video = Output(new Video)
   })
 
+  val hBackPorch = config.width.U - config.hDisplay.U - config.hFrontPorch.U - config.hRetrace.U - io.offset.x
+  val vBackPorch = config.height.U - config.vDisplay.U - config.vFrontPorch.U - config.vRetrace.U - io.offset.y
+
+  val hBeginSync = hBackPorch + config.hDisplay.U + config.hFrontPorch.U
+  val hEndSync = hBackPorch + config.hDisplay.U + config.hFrontPorch.U + config.hRetrace.U
+  val hBeginDisplay = hBackPorch
+  val hEndDisplay = hBackPorch + config.hDisplay.U
+
+  val vBeginSync = vBackPorch + config.vDisplay.U + config.vFrontPorch.U
+  val vEndSync = vBackPorch + config.vDisplay.U + config.vFrontPorch.U + config.vRetrace.U
+  val vBeginDisplay = vBackPorch
+  val vEndDisplay = vBackPorch + config.vDisplay.U
+
   // Counters
-  val (x, xWrap) = Counter(io.cen, config.hEndScan)
-  val (y, yWrap) = Counter(io.cen && xWrap, config.vEndScan)
+  val (x, xWrap) = Counter(io.cen, config.width)
+  val (y, yWrap) = Counter(io.cen && xWrap, config.height)
 
   // Offset the position so the display region begins at the origin
-  val pos = Pos(x - config.hBackPorch.U, y - config.vBackPorch.U)
+  val pos = Pos(x - hBackPorch, y - vBackPorch)
 
   // Sync signals
-  val hSync = x >= config.hBeginSync.U && x < config.hEndSync.U
-  val vSync = y >= config.vBeginSync.U && y < config.vEndSync.U
+  val hSync = x >= hBeginSync && x < hEndSync
+  val vSync = y >= vBeginSync && y < vEndSync
 
   // Blanking signals
-  val hDisplay = x >= config.hBeginDisplay.U && x < config.hEndDisplay.U
-  val vDisplay = y >= config.vBeginDisplay.U && y < config.vEndDisplay.U
+  val hDisplay = x >= hBeginDisplay && x < hEndDisplay
+  val vDisplay = y >= vBeginDisplay && y < vEndDisplay
 
   // Outputs
   io.video.pos := pos
