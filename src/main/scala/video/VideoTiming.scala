@@ -80,7 +80,9 @@ case class VideoTimingConfig(clockFreq: Double,
                              vDisplay: Int,
                              vFrontPorch: Int,
                              vRetrace: Int) {
+  /** Total width in pixels */
   val width = math.ceil(clockFreq / hFreq).toInt
+  /** Total height in pixels */
   val height = math.ceil(hFreq / vFreq).toInt
 }
 
@@ -107,25 +109,24 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
     val video = Output(new Video)
   })
 
-  val hBackPorch = config.width.U - config.hDisplay.U - config.hFrontPorch.U - config.hRetrace.U - io.offset.x
-  val vBackPorch = config.height.U - config.vDisplay.U - config.vFrontPorch.U - config.vRetrace.U - io.offset.y
-
-  val hBeginSync = hBackPorch + config.hDisplay.U + config.hFrontPorch.U
-  val hEndSync = hBackPorch + config.hDisplay.U + config.hFrontPorch.U + config.hRetrace.U
-  val hBeginDisplay = hBackPorch
-  val hEndDisplay = hBackPorch + config.hDisplay.U
-
-  val vBeginSync = vBackPorch + config.vDisplay.U + config.vFrontPorch.U
-  val vEndSync = vBackPorch + config.vDisplay.U + config.vFrontPorch.U + config.vRetrace.U
-  val vBeginDisplay = vBackPorch
-  val vEndDisplay = vBackPorch + config.vDisplay.U
-
   // Counters
   val (x, xWrap) = Counter(true.B, config.width)
   val (y, yWrap) = Counter(xWrap, config.height)
 
+  // Horizontal regions
+  val hBeginDisplay = config.width.U - config.hDisplay.U - config.hFrontPorch.U - config.hRetrace.U - io.offset.x
+  val hEndDisplay = config.width.U - config.hFrontPorch.U - config.hRetrace.U - io.offset.x
+  val hBeginSync = config.width.U - config.hRetrace.U - io.offset.x
+  val hEndSync = config.width.U - io.offset.x
+
+  // Vertical regions
+  val vBeginDisplay = config.height.U - config.vDisplay.U - config.vFrontPorch.U - config.vRetrace.U - io.offset.y
+  val vEndDisplay = config.height.U - config.vFrontPorch.U - config.vRetrace.U - io.offset.y
+  val vBeginSync = config.height.U - config.vRetrace.U - io.offset.y
+  val vEndSync = config.height.U - io.offset.y
+
   // Offset the position so the display region begins at the origin
-  val pos = Pos(x - hBackPorch, y - vBackPorch)
+  val pos = Pos(x - hBeginDisplay, y - vBeginDisplay)
 
   // Sync signals
   val hSync = x >= hBeginSync && x < hEndSync
