@@ -49,15 +49,29 @@ class TestPattern extends Module {
     val rgb = Output(new RGB)
   })
 
+  val CLK_FREQ = 6600000
+  val H_FREQ = 15230
+  val V_FREQ = 57.55
+  val H_PIX = math.ceil(CLK_FREQ / H_FREQ).toInt
+  val V_PIX = math.ceil(H_FREQ / V_FREQ).toInt
+  val H_DISPLAY = 320
+  val V_DISPLAY = 240
+  val H_FRONT_PORCH = 36
+  val V_FRONT_PORCH = 8
+  val H_RETRACE = 20
+  val V_RETRACE = 2
+  val H_BACK_PORCH = H_PIX - H_DISPLAY - H_FRONT_PORCH - H_RETRACE
+  val V_BACK_PORCH = V_PIX - V_DISPLAY - V_FRONT_PORCH - V_RETRACE
+
   val config = VideoTimingConfig(
-    hDisplay = 320, // 382
-    hFrontPorch = 5,
-    hRetrace = 23,
-    hBackPorch = 34,
-    vDisplay = 240, // 273
-    vFrontPorch = 12,
-    vRetrace = 2,
-    vBackPorch = 19
+    hDisplay = H_DISPLAY,
+    hFrontPorch = H_FRONT_PORCH,
+    hRetrace = H_RETRACE,
+    hBackPorch = H_BACK_PORCH,
+    vDisplay = V_DISPLAY,
+    vFrontPorch = V_FRONT_PORCH,
+    vRetrace = V_RETRACE,
+    vBackPorch = V_BACK_PORCH
   )
   val videoTiming = Module(new VideoTiming(config))
   videoTiming.io.cen := true.B
