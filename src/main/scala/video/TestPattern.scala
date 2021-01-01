@@ -50,14 +50,14 @@ class TestPattern extends Module {
   })
 
   val CLK_FREQ = 6600000
-  val H_FREQ = 15230
+  val H_FREQ = 15750
   val V_FREQ = 57.55
   val H_PIX = math.ceil(CLK_FREQ / H_FREQ).toInt
   val V_PIX = math.ceil(H_FREQ / V_FREQ).toInt
   val H_DISPLAY = 320
   val V_DISPLAY = 240
-  val H_FRONT_PORCH = 36
-  val V_FRONT_PORCH = 8
+  val H_FRONT_PORCH = 22
+  val V_FRONT_PORCH = 12
   val H_RETRACE = 20
   val V_RETRACE = 2
   val H_BACK_PORCH = H_PIX - H_DISPLAY - H_FRONT_PORCH - H_RETRACE

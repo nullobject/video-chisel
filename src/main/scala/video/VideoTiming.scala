@@ -99,6 +99,8 @@ class VideoTiming(config: VideoTimingConfig, xInit: Int = 0, yInit: Int = 0) ext
   val io = IO(new Bundle {
     /** Clock enable */
     val cen = Input(Bool())
+//    /** Offset inptut */
+//    val offset = Input(new Pos(9))
     /** Video signals */
     val video = Output(new Video)
   })
