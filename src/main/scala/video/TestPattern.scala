@@ -44,18 +44,19 @@ import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 class TestPattern extends Module {
   val io = IO(new Bundle {
     /** Video signals */
-    val video = Output(new Video)
+    val video = VideoIO()
     /** RGB output */
     val rgb = Output(new RGB)
   })
 
   val config = VideoTimingConfig(
-    clockFreq = 6600000,
-    hFreq = 15750,
-    vFreq = 57.55,
+    clockFreq = 28000000,
+    clockDiv = 4,
+    hFreq = 15625,
+    vFreq = 57.44,
     hDisplay = 320,
     vDisplay = 240,
-    hFrontPorch = 22,
+    hFrontPorch = 30,
     vFrontPorch = 12,
     hRetrace = 20,
     vRetrace = 2,
