@@ -34,15 +34,18 @@ package video
 
 import chisel3._
 
-/**
- * Represents a signed 2D vector.
- *
- * @param xWidth The X data width.
- * @param yWidth The Y data width.
- */
+/** Represents a signed 2D vector.
+  *
+  * @param xWidth
+  *   The X data width.
+  * @param yWidth
+  *   The Y data width.
+  */
 class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
+
   /** Horizontal position */
   val x = SInt(xWidth.W)
+
   /** Vertical position */
   val y = SInt(yWidth.W)
 
@@ -62,17 +65,17 @@ class SVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
   /** Left shift operator. */
   def <<(n: UInt) = SVec2((this.x << n).asSInt, (this.y << n).asSInt)
-
-  override def cloneType: this.type = new SVec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object SVec2 {
-  /**
-   * Creates a signed vector from X and Y values.
-   *
-   * @param x The horizontal position.
-   * @param y The vertical position.
-   */
+
+  /** Creates a signed vector from X and Y values.
+    *
+    * @param x
+    *   The horizontal position.
+    * @param y
+    *   The vertical position.
+    */
   def apply(x: SInt, y: SInt): SVec2 = {
     val pos = Wire(new SVec2(x.getWidth, y.getWidth))
     pos.x := x

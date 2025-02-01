@@ -38,47 +38,80 @@
 package video
 
 import chisel3._
-import chisel3.stage.{ChiselGeneratorAnnotation, ChiselStage}
 
-/** This is the top-level module for the test pattern circuit. */
-class TestPattern extends Module {
-  val io = IO(new Bundle {
-    /** Video signals */
-    val video = VideoIO()
-    /** RGB output */
-    val rgb = Output(new RGB)
-  })
+/** Represents a RGB color.
+  *
+  * @param n
+  *   The number of bits per color channel.
+  */
+class RGB(n: Int = 4) extends Bundle {
 
-  val config = VideoTimingConfig(
-    clockFreq = 28000000,
-    clockDiv = 4,
-    hFreq = 15625,
-    vFreq = 57.44,
-    hDisplay = 320,
-    vDisplay = 240,
-    hFrontPorch = 30,
-    vFrontPorch = 12,
-    hRetrace = 20,
-    vRetrace = 2,
-  )
-  val videoTiming = Module(new VideoTiming(config))
-  videoTiming.io.offset := SVec2(0.S, -1.S)
-  val video = videoTiming.io.video
+  /** Red */
+  val r = UInt(n.W)
 
-  val rgb = RGB(
-    Mux(video.pos.x(2, 0) === 0.U | video.pos.y(2, 0) === 0.U, 63.U, 0.U),
-    Mux(video.pos.x(4), 63.U, 0.U),
-    Mux(video.pos.y(4), 63.U, 0.U),
-  )
+  /** Green */
+  val g = UInt(n.W)
 
-  // Outputs
-  io.video := video
-  io.rgb := Mux(video.enable, rgb, RGB(0.U))
+  /** Blue */
+  val b = UInt(n.W)
+
+  /** Bitwise AND operator. */
+  def &(that: RGB): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := this.r & that.r
+    rgb.g := this.g & that.g
+    rgb.b := this.b & that.b
+    rgb
+  }
+
+  /** Bitwise OR operator. */
+  def |(that: RGB): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := this.r | that.r
+    rgb.g := this.g | that.g
+    rgb.b := this.b | that.b
+    rgb
+  }
+
+  /** Bitwise XOR operator. */
+  def ^(that: RGB): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := this.r ^ that.r
+    rgb.g := this.g ^ that.g
+    rgb.b := this.b ^ that.b
+    rgb
+  }
 }
 
-object TestPattern extends App {
-  (new ChiselStage).execute(
-    Array("-X", "verilog", "--target-dir", "quartus/rtl"),
-    Seq(ChiselGeneratorAnnotation(() => new TestPattern()))
-  )
+object RGB {
+
+  /** Constructs a RGB color from a single value.
+    *
+    * @param value
+    *   The value of the red, green, and blue channels.
+    */
+  def apply(value: UInt): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := value
+    rgb.g := value
+    rgb.b := value
+    rgb
+  }
+
+  /** Constructs a RGB color from red, green, and blue values.
+    *
+    * @param r
+    *   The red channel value.
+    * @param g
+    *   The green channel value.
+    * @param b
+    *   The blue channel value.
+    */
+  def apply(r: UInt, g: UInt, b: UInt): RGB = {
+    val rgb = Wire(new RGB)
+    rgb.r := r
+    rgb.g := g
+    rgb.b := b
+    rgb
+  }
 }

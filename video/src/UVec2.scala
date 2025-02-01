@@ -34,15 +34,18 @@ package video
 
 import chisel3._
 
-/**
- * Represents an unsigned 2D vector.
- *
- * @param xWidth The X data width.
- * @param yWidth The Y data width.
- */
+/** Represents an unsigned 2D vector.
+  *
+  * @param xWidth
+  *   The X data width.
+  * @param yWidth
+  *   The Y data width.
+  */
 class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
+
   /** Horizontal position */
   val x = UInt(xWidth.W)
+
   /** Vertical position */
   val y = UInt(yWidth.W)
 
@@ -62,17 +65,17 @@ class UVec2(xWidth: Int, yWidth: Int) extends Bundle {
 
   /** Left shift operator. */
   def <<(n: UInt) = UVec2((this.x << n).asUInt, (this.y << n).asUInt)
-
-  override def cloneType: this.type = new UVec2(xWidth, yWidth).asInstanceOf[this.type]
 }
 
 object UVec2 {
-  /**
-   * Creates an unsigned vector from X and Y values.
-   *
-   * @param x The horizontal position.
-   * @param y The vertical position.
-   */
+
+  /** Creates an unsigned vector from X and Y values.
+    *
+    * @param x
+    *   The horizontal position.
+    * @param y
+    *   The vertical position.
+    */
   def apply(x: UInt, y: UInt): UVec2 = {
     val pos = Wire(new UVec2(x.getWidth, y.getWidth))
     pos.x := x

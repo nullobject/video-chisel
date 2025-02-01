@@ -1,5 +1,7 @@
 *.qdf
 *.qws
+.bloop
+.metals
 project/target
 quartus/c5_pin_model_dump.txt
 quartus/db
@@ -7,5 +9,5 @@ quartus/incremental_db
 quartus/jtag.cdf
 quartus/output_files
 quartus/rtl/TestPattern.*
-target
+out
 test_run_dir

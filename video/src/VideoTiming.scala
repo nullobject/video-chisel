@@ -35,19 +35,26 @@ package video
 import chisel3._
 
 /** Represents the analog video signals. */
-class VideoIO private extends Bundle {
+class VideoIO extends Bundle {
+
   /** Asserted when the pixel clock is enabled */
   val pixelClockEnable = Output(Bool())
+
   /** Beam position */
   val pos = Output(new UVec2(9))
+
   /** Horizontal sync */
   val hSync = Output(Bool())
+
   /** Vertical sync */
   val vSync = Output(Bool())
+
   /** Horizontal blank */
   val hBlank = Output(Bool())
+
   /** Vertical blank */
   val vBlank = Output(Bool())
+
   /** Asserted when the beam is in the display region */
   val enable = Output(Bool())
 }
@@ -56,73 +63,100 @@ object VideoIO {
   def apply() = new VideoIO
 }
 
-/**
- * Represents the video timing configuration.
- *
- * @param clockFreq   The video clock frequency (Hz).
- * @param clockDiv    The video clock divider.
- * @param hFreq       The horizontal frequency (Hz).
- * @param hDisplay    The horizontal display width.
- * @param hFrontPorch The width of the horizontal front porch region.
- * @param hRetrace    The width of the horizontal retrace region.
- * @param hInit       The initial horizontal position (for testing).
- * @param vFreq       The vertical frequency (Hz).
- * @param vDisplay    The vertical display height.
- * @param vFrontPorch The width of the vertical front porch region.
- * @param vRetrace    The width of the vertical retrace region.
- * @param vInit       The initial vertical position (for testing).
- */
-case class VideoTimingConfig(clockFreq: Double,
-                             clockDiv: Int,
-                             hFreq: Double,
-                             hDisplay: Int,
-                             hFrontPorch: Int,
-                             hRetrace: Int,
-                             hInit: Int = 0,
-                             vFreq: Double,
-                             vDisplay: Int,
-                             vFrontPorch: Int,
-                             vRetrace: Int,
-                             vInit: Int = 0) {
+/** Represents the video timing configuration.
+  *
+  * @param clockFreq
+  *   The video clock frequency (Hz).
+  * @param clockDiv
+  *   The video clock divider.
+  * @param hFreq
+  *   The horizontal frequency (Hz).
+  * @param hDisplay
+  *   The horizontal display width.
+  * @param hFrontPorch
+  *   The width of the horizontal front porch region.
+  * @param hRetrace
+  *   The width of the horizontal retrace region.
+  * @param hInit
+  *   The initial horizontal position (for testing).
+  * @param vFreq
+  *   The vertical frequency (Hz).
+  * @param vDisplay
+  *   The vertical display height.
+  * @param vFrontPorch
+  *   The width of the vertical front porch region.
+  * @param vRetrace
+  *   The width of the vertical retrace region.
+  * @param vInit
+  *   The initial vertical position (for testing).
+  */
+case class VideoTimingConfig(
+    clockFreq: Double,
+    clockDiv: Int,
+    hFreq: Double,
+    hDisplay: Int,
+    hFrontPorch: Int,
+    hRetrace: Int,
+    hInit: Int = 0,
+    vFreq: Double,
+    vDisplay: Int,
+    vFrontPorch: Int,
+    vRetrace: Int,
+    vInit: Int = 0
+) {
+
   /** Total width in pixels */
   val width = math.ceil(clockFreq / clockDiv / hFreq).toInt
+
   /** Total height in pixels */
   val height = math.ceil(hFreq / vFreq).toInt
 }
 
-/**
- * Generates the video timing signals required for driving a 15kHz CRT.
- *
- * The horizontal sync signal tells the CRT when to start a new scanline, and the vertical sync
- * signal tells it when to start a new field.
- *
- * The blanking signals indicate whether the beam is in either the horizontal or vertical blanking
- * regions. Video output is disabled while the beam is in these regions.
- *
- * @param config The video timing configuration.
- */
+/** Generates the video timing signals required for driving a 15kHz CRT.
+  *
+  * The horizontal sync signal tells the CRT when to start a new scanline, and
+  * the vertical sync signal tells it when to start a new field.
+  *
+  * The blanking signals indicate whether the beam is in either the horizontal
+  * or vertical blanking regions. Video output is disabled while the beam is in
+  * these regions.
+  *
+  * @param config
+  *   The video timing configuration.
+  */
 class VideoTiming(config: VideoTimingConfig) extends Module {
   val io = IO(new Bundle {
+
     /** CRT offset */
     val offset = Input(new SVec2(4))
+
     /** Video port */
     val video = Output(VideoIO())
   })
 
   // Counters
   val (_, clockDivWrap) = Counter.static(config.clockDiv)
-  val (x, xWrap) = Counter.static(config.width, enable = clockDivWrap, init = config.hInit)
-  val (y, yWrap) = Counter.static(config.height, enable = clockDivWrap && xWrap, init = config.vInit)
+  val (x, xWrap) =
+    Counter.static(config.width, enable = clockDivWrap, init = config.hInit)
+  val (y, yWrap) = Counter.static(
+    config.height,
+    enable = clockDivWrap && xWrap,
+    init = config.vInit
+  )
 
   // Horizontal regions
-  val hBeginDisplay = (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
-  val hEndDisplay = (config.width.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
+  val hBeginDisplay =
+    (config.width.S - config.hDisplay.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
+  val hEndDisplay =
+    (config.width.S - config.hFrontPorch.S - config.hRetrace.S + io.offset.x).asUInt
   val hBeginSync = config.width.U - config.hRetrace.U
   val hEndSync = config.width.U
 
   // Vertical regions
-  val vBeginDisplay = (config.height.S - config.vDisplay.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
-  val vEndDisplay = (config.height.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
+  val vBeginDisplay =
+    (config.height.S - config.vDisplay.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
+  val vEndDisplay =
+    (config.height.S - config.vFrontPorch.S - config.vRetrace.S + io.offset.y).asUInt
   val vBeginSync = config.height.U - config.vRetrace.U
   val vEndSync = config.height.U
 
